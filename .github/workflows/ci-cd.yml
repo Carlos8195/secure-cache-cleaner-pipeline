@@ -1,0 +1,68 @@
+name: Secure CI/CD Pipeline
+
+on:
+ push:
+  branches: [ "main" ]
+ pull_request:
+  branches: [ "main" ]
+
+permissions:
+ contents: read
+ packages: write
+ security-events: write
+
+jobs:
+ test-and-security:
+  name: Test and Security Scan
+  runs-on: ubuntu-latest
+
+  steps:
+   - name: Checkout code
+     uses: actions/checkout@v4
+
+   - name: Run shell script test
+     run: |
+       chmod +x clear_cache.sh
+       chmod +x test_clear_cache.sh
+       ./test_clear_cache.sh
+
+   - name: Run Shellcheck security/lint scan
+     uses: ludeeus/action-shellcheck@master
+     with:
+       scandir: '.'
+
+ build-scan-deploy:
+  name: Build, Scan, and Deploy Container
+  runs-on: ubuntu-latest
+  needs: test-and-security
+
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set lowercase image name
+      run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}/cache-cleaner" >> $GITHUB_ENV 
+  
+    - name: Build Docker image
+      run: docker build -t $IMAGE_NAME:${{ github.sha }}.
+      
+    - name: Scan Docker image with trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+       image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+       format: table
+       exit-code: 0
+       ignore-unfixed: true
+       vuln-type: os,library
+       severity: CRITICAL,HIGH
+
+    - name: Log in to Github Container Registry
+      uses: docker/login-action@v3
+      with:
+       registry: ghcr.io
+       username: ${{ github.actor }}
+       password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish docker image to Github container registry
+      run: |
+       docker push $IMAGE_NAME:${{ github.sha }}
