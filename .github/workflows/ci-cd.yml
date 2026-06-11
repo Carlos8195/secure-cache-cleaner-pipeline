@@ -23,8 +23,8 @@ jobs:
    - name: Run shell script test
      run: |
        chmod +x clear_cache.sh
-       chmod +x test_clear_cache.sh
-       ./test_clear_cache.sh
+       chmod +x tests/test_clear_cache.sh
+       ./tests/test_clear_cache.sh
 
    - name: Run Shellcheck security/lint scan
      uses: ludeeus/action-shellcheck@master

@@ -8,7 +8,7 @@
 # ==================================================
 
 echo "This script will close your browsers, clear browser cache, and reopen them."
-read -p "Continue? y/n: " confirm
+read -r -p "Continue? y/n: " confirm
 
 confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
 
