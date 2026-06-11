@@ -44,7 +44,7 @@ jobs:
       run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}/cache-cleaner" >> $GITHUB_ENV 
   
     - name: Build Docker image
-      run: docker build -t $IMAGE_NAME:${{ github.sha }}.
+      run: docker build -t $IMAGE_NAME:${{ github.sha }} .
       
     - name: Scan Docker image with trivy
       uses: aquasecurity/trivy-action@master
